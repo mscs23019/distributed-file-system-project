@@ -1,0 +1,26 @@
+distributed file system project
+distributed-file-system-project/
+│
+├── master.py
+├── cs1.py
+├── cs2.py
+├── cs3.py
+├── client.py
+└── heartbeat.py
+
+
+Changelog
+
+Added Remote Procedure Calls with rpyc
+Added replication factor
+Added Create, Read, Append, Delete & List operations
+Dependency
+
+rpyc
+Commands
+
+Create: python client.py create <file_name>
+Read: python client.py read <file_name> <data>
+Append: python client.py append <file_name> <string>
+Delete: python client.py delete <file_name>
+List: python client.py list

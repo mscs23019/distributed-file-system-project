@@ -45,7 +45,6 @@ class GFSClient:
 
     def append(self, file_name, data):
         if not self.master.check_exists(file_name):
-            print("(404) File not found")
             raise Exception(f"Append Error: File {file_name} does not exist")
         num_append_chunks = self.__num_of_chunks(len(data))
         append_chunk_ids = self.master.alloc_append(file_name, num_append_chunks)
@@ -53,12 +52,12 @@ class GFSClient:
 
     def read(self, file_name):
         if not self.master.check_exists(file_name):
-            print("(404) File not found")
             raise Exception(f"Read Error: File {file_name} does not exist")
 
         chunks = []
         chunk_ids = self.master.get_chunk_ids(file_name)
         for chunk_id in chunk_ids:
+            found_chunk = False
             loc_ids = self.master.get_loc_ids(chunk_id)
             for loc_id in loc_ids:
                 host, port = self.__get_host_port(loc_id)
@@ -66,68 +65,32 @@ class GFSClient:
                     con = rpyc.connect(host, port=port)
                     chunk_server = con.root.GFSChunkServer()
                     chunk = chunk_server.get_data(chunk_id)
-                    chunks.append(chunk)
-                    break
+                    if chunk:
+                        chunks.append(chunk)
+                        found_chunk = True
+                        break
                 except EnvironmentError:
                     log.info(f"Cannot establish connection with Chunk Server at {host}:{port}")
+            if not found_chunk:
+                log.error(f"Chunk {chunk_id} could not be found on any chunk server")
 
-        data = functools.reduce(lambda a, b: a + b, chunks)  # reassembling in order
-        print(data)
+        data = functools.reduce(lambda a, b: a + b, chunks) if chunks else ""
+        return data
 
     def delete(self, file_name):
         chunk_ids = self.master.get_chunk_ids(file_name)
         for chunk_id in chunk_ids:
             loc_ids = self.master.get_loc_ids(chunk_id)
-            for loc_id in loc_ids:
+            if loc_ids:
+                loc_id = loc_ids[0]  # Only delete from the first chunk server
                 host, port = self.__get_host_port(loc_id)
                 try:
                     con = rpyc.connect(host, port=port)
                     chunk_server = con.root.GFSChunkServer()
                     chunk_server.delete_data(chunk_id)
+                    log.info(f"Chunk {chunk_id} deleted from server {host}:{port}")
                 except EnvironmentError:
                     log.info(f"Cannot establish connection with Chunk Server at {host}:{port}")
-            self.master.delete_chunk(chunk_id)
-        self.master.delete_file(file_name)
 
-    def list(self):
-        files = self.master.list_files()
-        print("-------------- Files in the GFS --------------")
-        for file in files:
-            print(file)
-
-def help_on_usage():
-    print("-------------- Help on Usage --------------")
-    print("-> To create or overwrite: client.py create filename data")
-    print("-> To read: client.py read filename")
-    print("-> To append: client.py append filename data")
-    print("-> To delete: client.py delete filename")
-    print("-> To list: client.py list")
-
-def run(args):
-    try:
-        con = rpyc.connect("localhost", port=4531)
-        client = GFSClient(con.root.GFSMaster())
-    except EnvironmentError:
-        print("Cannot establish connection with GFSMaster")
-        print("Connection Error: Please start master.py and try again")
-        sys.exit(1)
-
-    if len(args) == 0:
-        help_on_usage()
-        return
-    if args[0] == "create":
-        client.create(args[1], args[2])
-    elif args[0] == "read":
-        client.read(args[1])
-    elif args[0] == "append":
-        client.append(args[1], args[2])
-    elif args[0] == "delete":
-        client.delete(args[1])
-    elif args[0] == "list":
-        client.list()
-    else:
-        print("Incorrect Command")
-        help_on_usage()
-
-if __name__ == "__main__":
-    run(sys.argv[1:])
+    def list_files(self):
+        return self.master.list_files()

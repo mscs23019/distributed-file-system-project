@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GFS Web Interface</title>
+</head>
+<body>
+    <h1>GFS Web Interface</h1>
+    
+    <h2>Create File</h2>
+    <form action="/create" method="POST">
+        <label for="file_name">File Name:</label>
+        <input type="text" id="file_name" name="file_name" required><br><br>
+        <label for="data">Data:</label><br>
+        <textarea id="data" name="data" rows="4" cols="50" required></textarea><br><br>
+        <button type="submit">Create File</button>
+    </form>
+
+    <h2>Read File</h2>
+    <form action="/read" method="POST">
+        <label for="file_name">File Name:</label>
+        <input type="text" id="file_name" name="file_name" required><br><br>
+        <button type="submit">Read File</button>
+    </form>
+
+    <h2>Append to File</h2>
+    <form action="/append" method="POST">
+        <label for="file_name">File Name:</label>
+        <input type="text" id="file_name" name="file_name" required><br><br>
+        <label for="data">Data:</label><br>
+        <textarea id="data" name="data" rows="4" cols="50" required></textarea><br><br>
+        <button type="submit">Append to File</button>
+    </form>
+
+    <h2>Delete File</h2>
+    <form action="/delete" method="POST">
+        <label for="file_name">File Name:</label>
+        <input type="text" id="file_name" name="file_name" required><br><br>
+        <button type="submit">Delete File</button>
+    </form>
+
+    <h2>List Files</h2>
+    <form action="/list" method="GET">
+        <button type="submit">List Files</button>
+    </form>
+</body>
+</html>
